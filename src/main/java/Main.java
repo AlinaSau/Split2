@@ -44,7 +44,7 @@ public class Main {
             for (int i = 0; i < 26; i++) {
                 for (int j = 0; j < 26; j++) {
                     if (count <= quantity) {
-                        names.add(outputName + ((char) 96 + i) + ((char) 96 + j));
+                        names.add(outputName + (char)((int)'a' + i) + (char)((int)'a' + j));
                     }
                     count++;
                 }
