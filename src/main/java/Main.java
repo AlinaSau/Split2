@@ -5,75 +5,79 @@ import org.kohsuke.args4j.Option;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Main {
 
     public static void main(String[] args) throws CmdLineException, IOException {
         Args arguments = new Args(args);
-        List<String> fileContents;
-        List<String> fileNames;
-        if (arguments.fileNum != 0) {
-            String text = Files.readString(new File(arguments.inputName).toPath());
-            int charQuantity = (text.length() + arguments.fileNum - 1) / arguments.fileNum;
-            fileContents = divideFileByChars(arguments.inputName, charQuantity);
-            fileNames = getFileNames(arguments.d, arguments.fileNum, arguments.outputName);
-        } else {
-            if (arguments.lines != 0) {
-                fileContents = divideFileByLines(arguments.inputName, arguments.lines);
-            } else {
-                fileContents = divideFileByChars(arguments.inputName, arguments.chars);
-            }
-            fileNames = getFileNames(arguments.d, fileContents.size(), arguments.outputName);
-        }
+        int i = 0;
+        int charQuantity;
 
-        for (int i = 0; i < fileNames.size(); i++) {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(fileNames.get(i)));
-            bw.write(fileContents.get(i));
-            bw.close();
+        if (arguments.fileNum != 0) {
+            String text = Files.readString(arguments.inputFile.toPath());
+            charQuantity = (text.length() + arguments.fileNum - 1) / arguments.fileNum;
         }
+        else charQuantity = arguments.chars;
+
+        BufferedReader br = Files.newBufferedReader(arguments.inputFile.toPath());
+
+        while (true) {
+            String currentFileName = getNextFileName(arguments.d, i, arguments.outputName);
+            String nextString;
+            if (arguments.lines != 0) nextString = getNextLines(br, arguments.lines);
+            else nextString = getNextChars(br, charQuantity);
+            if (nextString == null) break;
+            BufferedWriter bw = new BufferedWriter(new FileWriter(currentFileName));
+            bw.write(nextString);
+            bw.close();
+            i++;
+        }
+        br.close();
     }
 
-    public static List<String> getFileNames(boolean d, int quantity, String outputName) {
-        List<String> names = new ArrayList<>();
-        if (d) {
-            for (int i = 1; i <= quantity; i++) names.add(outputName + i);
-        } else {
-            int count = 1;
-            for (int i = 0; i < 26; i++) {
-                for (int j = 0; j < 26; j++) {
-                    if (count <= quantity) {
-                        names.add(outputName + (char)((int)'a' + i) + (char)((int)'a' + j));
-                    }
-                    count++;
+    private static String getNextFileName(boolean d, int currentIteration, String outputName) {
+        if (d) return outputName + (currentIteration + 1);
+        else return outputName + (char)((int)'a' + currentIteration / 26) + (char)((int)'a' + currentIteration % 26);
+    }
+
+    private static String getNextLines(BufferedReader br, int quantity) {
+        try {
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < quantity; i++) {
+                String line = br.readLine();
+                if (line == null) {
+                    if (result.isEmpty()) return null;
+                    else break;
+                } else {
+                    result.append(line).append("\n");
                 }
             }
+            int endIndex = result.lastIndexOf("\n");
+            if (endIndex == -1) endIndex = result.length() - 1;
+            if (endIndex == -1) endIndex = 0;
+            return result.substring(0, endIndex);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
-        return names;
     }
 
-    private static List<String> divideFileByLines(String inputName, int lineQuantity) throws IOException {
-        List<String> lines = Files.readAllLines(new File(inputName).toPath());
-        List<String> result = new ArrayList<>();
-        int lineNum = (lines.size() + lineQuantity - 1) / lineQuantity;
-        for (int i = 0; i < lines.size(); i += lineNum) {
-            StringBuilder sb = new StringBuilder();
-            for (String line: lines.subList(i, Math.min(i + lineQuantity, lines.size()))) {
-                sb.append(line);
+    private static String getNextChars(BufferedReader br, int quantity) {
+        try {
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < quantity; i++) {
+                int c = br.read();
+                if (c == -1) {
+                    if (result.isEmpty()) return null;
+                    else break;
+                }
+                result.append((char) c);
             }
-            result.add(sb.toString());
+            return result.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
-        return result;
-    }
-
-    private static List<String> divideFileByChars(String inputName, int charQuantity) throws IOException {
-        String text = Files.readString(new File(inputName).toPath());
-        List<String> result = new ArrayList<>();
-        for (int i = 0; i < text.length(); i += charQuantity) {
-            result.add(text.substring(i, Math.min(i + charQuantity, text.length())));
-        }
-        return result;
     }
 }
 
@@ -96,10 +100,13 @@ class Args {
     @Argument()
     String inputName;
 
+    File inputFile;
+
     Args(String[] args) throws CmdLineException {
         CmdLineParser parser = new CmdLineParser(this);
         parser.parseArgument(args);
-        if (outputName == null) outputName = "x";
+        inputFile = new File(inputName);
+        if (outputName == null) outputName = inputFile.getParent() + File.separator + "x";
         if (outputName.equals("-")) outputName = inputName;
     }
 

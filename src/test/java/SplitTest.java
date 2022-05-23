@@ -12,8 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SplitTest {
 
-    String path = "C:/Users/ALINA/IdeaProjects/split";
-
     public void testHelp(String[] args, String[] names, String[] expected) throws IOException, CmdLineException {
         Main.main(args);
         for (int i = 0; i < names.length; i++) {
@@ -96,10 +94,10 @@ public class SplitTest {
         };
 
         String[] expected = {
-                "ab",
-                "cd",
-                "ef",
-                "gh",
+                "a\nb",
+                "c\nd",
+                "e\nf",
+                "g\nh",
                 "i"
         };
 
