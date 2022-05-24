@@ -105,7 +105,6 @@ public class SplitTest {
                 names,
                 expected
         );
-        //не работает пока
     }
 
     @Test
@@ -130,7 +129,6 @@ public class SplitTest {
                 names,
                 expected
         );
-        //почему-то не кидает в нужную папку
     }
 
     @Test
